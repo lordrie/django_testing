@@ -10,7 +10,8 @@ from http import HTTPStatus
 def test_user_can_create_comment(client, client_loggin, news_detail_url,
                                  form_data, is_anonymous):
     """
-    Проверка возможности создания комментария анонимным и авторизованным пользователями.
+    Проверка возможности создания комментария анонимным
+    и авторизованным пользователями.
     """
     if is_anonymous:
         client.post(news_detail_url, data=form_data)
