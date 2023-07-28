@@ -6,12 +6,11 @@ from http import HTTPStatus
 
 
 @pytest.mark.django_db
-def test_anonymous_user_cant_create_comment(client, news, form_data):
+def test_anonymous_user_cant_create_comment(client, news_detail_url, form_data):
     """
     Тест проверяет, что анонимный пользователь не может отправить комментарий.
     """
-    url = reverse('news:detail', args=(news.id,))
-    client.post(url, data=form_data)
+    client.post(news_detail_url, data=form_data)
     assert Comment.objects.count() == 0
 
 
