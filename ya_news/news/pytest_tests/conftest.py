@@ -65,18 +65,15 @@ def second_comments(second_news, author):
 
 
 @pytest.fixture
-def news_bulk():
-    return News.objects.bulk_create([
-        News(title=f'Заголовок {i}', text=f'Текст {i}')
-        for i in range(NEWS_COUNT)
-    ])
-
-
-@pytest.fixture
 def home_url():
     return reverse('news:home')
 
 
 @pytest.fixture
 def сomments_url():
+    return reverse('news:detail', args=(news.id,))
+
+
+@pytest.fixture
+def news_detail_url(news):
     return reverse('news:detail', args=(news.id,))
