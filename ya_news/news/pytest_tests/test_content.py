@@ -2,35 +2,28 @@ from django.urls import reverse
 import pytest
 from news.models import News
 
+MAX_NEWS_ON_PAGE = 10
+
 
 @pytest.mark.django_db
-def test_news_count_on_home_page(client):
+def test_news_count_on_home_page(client, home_url):
     """
     Количество новостей на главной странице — не более 10.
     """
-    News.objects.bulk_create([
-        News(title=f'Заголовок {i}', text=f'Текст {i}')
-        for i in range(15)
-    ])
-    url = reverse('news:home')
-    response = client.get(url)
-    assert len(response.context['news_list']) <= 10
+    response = client.get(home_url)
+    assert len(response.context['news_list']) <= MAX_NEWS_ON_PAGE
 
 
 @pytest.mark.django_db
-def test_news_order_on_home_page(client):
+def test_news_order_on_home_page(client, home_url):
     """
     Новости отсортированы от самой свежей к самой старой.
     Свежие новости в начале списка.
     """
-    news = [
-        News.objects.create(title=f'Заголовок {i}', text=f'Текст {i}')
-        for i in range(3)
-    ]
-    url = reverse('news:home')
-    response = client.get(url)
+    response = client.get(home_url)
     news_list = response.context['news_list']
-    assert list(news_list) == news
+    expected_news_list = list(News.objects.all().order_by('-date'))
+    assert list(news_list) == expected_news_list
 
 
 @pytest.mark.django_db
@@ -46,15 +39,17 @@ def test_comments_order_on_news_page(client, second_news, second_comments):
 
 
 @pytest.mark.django_db
-def test_comment_form_availability(client, reader, news):
-    """
-    Анонимному пользователю недоступна форма для
+@pytest.mark.parametrize('is_authenticated,form_is_available', [
+    (False, False),
+    (True, True),
+])
+def test_comment_form_availability(client, reader,
+                                   news, is_authenticated, form_is_available):
+    """Анонимному пользователю недоступна форма для
     отправки комментария на странице отдельной новости,
-    а авторизованному доступна.
-    """
+    а авторизованному доступна."""
     url = reverse('news:detail', args=(news.id,))
+    if is_authenticated:
+        client.force_login(reader)
     response = client.get(url)
-    assert 'form' not in response.context
-    client.force_login(reader)
-    response = client.get(url)
-    assert 'form' in response.context
+    assert ('form' in response.context) == form_is_available

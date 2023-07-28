@@ -1,8 +1,12 @@
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 from news.models import News, Comment
 import pytest
 
 User = get_user_model()
+NEWS_COUNT = 15
+COMMENTS_COUNT = 3
+SECOND_NEWS_COUNT = 3
 
 
 @pytest.fixture
@@ -44,7 +48,7 @@ def comment(news, author):
 def second_news():
     return [
         News.objects.create(title=f'Заголовок {i}', text=f'Текст {i}')
-        for i in range(3)
+        for i in range(SECOND_NEWS_COUNT)
     ]
 
 
@@ -56,5 +60,23 @@ def second_comments(second_news, author):
             author=author,
             text=f'Текст комментария {i}'
         )
-        for i in range(3)
+        for i in range(COMMENTS_COUNT)
     ]
+
+
+@pytest.fixture
+def news_bulk():
+    return News.objects.bulk_create([
+        News(title=f'Заголовок {i}', text=f'Текст {i}')
+        for i in range(NEWS_COUNT)
+    ])
+
+
+@pytest.fixture
+def home_url():
+    return reverse('news:home')
+
+
+@pytest.fixture
+def сomments_url():
+    return reverse('news:detail', args=(news.id,))
