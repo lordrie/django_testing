@@ -57,15 +57,17 @@ class TestLogic(TestCase):
         note = Note.objects.first()
         edit_data = {'title': 'Updated Title', 'text': 'Updated Text'}
         edit_url = reverse('notes:edit', args=[note.slug])
-        response = self.client.post(edit_url, edit_data)
-        self.assertRedirects(response, reverse('notes:success'))
-        note.refresh_from_db()
-        self.assertEqual(note.title, edit_data['title'])
-        self.assertEqual(note.text, edit_data['text'])
+        with self.subTest('User can edit own note'):
+            response = self.client.post(edit_url, edit_data)
+            self.assertRedirects(response, reverse('notes:success'))
+            note.refresh_from_db()
+            self.assertEqual(note.title, edit_data['title'])
+            self.assertEqual(note.text, edit_data['text'])
         delete_url = reverse('notes:delete', args=[note.slug])
-        response = self.client.post(delete_url)
-        self.assertRedirects(response, reverse('notes:success'))
-        self.assertEqual(Note.objects.count(), 0)
+        with self.subTest('User can delete own note'):
+            response = self.client.post(delete_url)
+            self.assertRedirects(response, reverse('notes:success'))
+            self.assertEqual(Note.objects.count(), 0)
 
     def test_user_cannot_edit_or_delete_other_users_notes(self):
         """Пользователь не может редактировать или удалять чужие заметки"""
