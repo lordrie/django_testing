@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from notes.models import Note
 from pytils.translit import slugify
+from django.http import HttpResponseNotFound
 
 User = get_user_model()
 
@@ -35,9 +36,7 @@ class TestLogic(TestCase):
         response = self.client.post(reverse('notes:add'), self.note_data)
         self.assertRedirects(response, reverse('notes:success'))
         self.assertEqual(Note.objects.count(), 1)
-        # Попытка создать вторую заметку с тем же заголовком
         response = self.client.post(reverse('notes:add'), self.note_data)
-        # Проверка, что вторая заметка не была создана
         self.assertEqual(Note.objects.count(), 1)
 
     def test_slug_is_generated_automatically(self):
@@ -53,11 +52,9 @@ class TestLogic(TestCase):
     def test_user_can_edit_and_delete_own_notes(self):
         """Пользователь может редактировать и удалять свои заметки"""
         self.client.login(username='testuser', password='testpass')
-        # Создание заметки
         response = self.client.post(reverse('notes:add'), self.note_data)
         self.assertRedirects(response, reverse('notes:success'))
         note = Note.objects.first()
-        # Редактирование заметки
         edit_data = {'title': 'Updated Title', 'text': 'Updated Text'}
         edit_url = reverse('notes:edit', args=[note.slug])
         response = self.client.post(edit_url, edit_data)
@@ -65,7 +62,6 @@ class TestLogic(TestCase):
         note.refresh_from_db()
         self.assertEqual(note.title, edit_data['title'])
         self.assertEqual(note.text, edit_data['text'])
-        # Удаление заметки
         delete_url = reverse('notes:delete', args=[note.slug])
         response = self.client.post(delete_url)
         self.assertRedirects(response, reverse('notes:success'))
@@ -73,21 +69,22 @@ class TestLogic(TestCase):
 
     def test_user_cannot_edit_or_delete_other_users_notes(self):
         """Пользователь не может редактировать или удалять чужие заметки"""
-        # Создание заметки другим пользователем
         other_user = User.objects.create_user(username='otheruser',
                                               password='testpass')
         other_note = Note.objects.create(title='Other Note', text='Other Text',
                                          author=other_user)
         self.client.login(username='testuser', password='testpass')
-        # Попытка редактирования чужой заметки
         edit_data = {'title': 'Updated Title', 'text': 'Updated Text'}
         edit_url = reverse('notes:edit', args=[other_note.slug])
-        response = self.client.post(edit_url, edit_data)
-        self.assertEqual(response.status_code, 404)
-        other_note.refresh_from_db()
-        self.assertEqual(other_note.title, 'Other Note')
-        self.assertEqual(other_note.text, 'Other Text')
-        # Попытка удаления чужой заметки
+        with self.subTest('Пользователь не может редактировать чужие заметки'):
+            response = self.client.post(edit_url, edit_data)
+            self.assertEqual(response.status_code,
+                             HttpResponseNotFound.status_code)
+            other_note.refresh_from_db()
+            self.assertEqual(other_note.title, 'Other Note')
+            self.assertEqual(other_note.text, 'Other Text')
         delete_url = reverse('notes:delete', args=[other_note.slug])
-        response = self.client.post(delete_url)
-        self.assertEqual(response.status_code, 404)
+        with self.subTest('Пользователь не может удалять чужие заметки'):
+            response = self.client.post(delete_url)
+            self.assertEqual(response.status_code,
+                             HttpResponseNotFound.status_code)
