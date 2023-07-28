@@ -26,8 +26,8 @@ class TestContent(TestCase):
         response = self.client.get(reverse('notes:list'))
         notes = response.context['object_list']
         test_cases = (
-            ('Test note in list', self.note, True),
-            ('Other user note not in list', self.other_note, False),
+            ('Заметка в списке', self.note, True),
+            ('Заметка другого юзера не в списке', self.other_note, False),
         )
         for case, note, expected in test_cases:
             with self.subTest(case):
