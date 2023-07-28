@@ -20,23 +20,27 @@ class TestContent(TestCase):
     def setUp(self):
         self.client.login(username='author', password='testpass')
 
-    def test_note_in_object_list(self):
-        """Тестирование наличия заметки в списке object_list"""
+    def test_notes_in_object_list(self):
+        """Тестирование наличия заметки в списке object_list
+        и отсутствия заметок другого пользователя"""
         response = self.client.get(reverse('notes:list'))
         notes = response.context['object_list']
-        self.assertIn(self.note, notes)
-
-    def test_other_user_notes_not_in_list(self):
-        """Тестирование отсутствия заметок другого пользователя"""
-        response = self.client.get(reverse('notes:list'))
-        notes = response.context['object_list']
-        self.assertIn(self.note, notes)
-        self.assertNotIn(self.other_note, notes)
+        test_cases = (
+            ('Test note in list', self.note, True),
+            ('Other user note not in list', self.other_note, False),
+        )
+        for case, note, expected in test_cases:
+            with self.subTest(case):
+                if expected:
+                    self.assertIn(note, notes)
+                else:
+                    self.assertNotIn(note, notes)
 
     def test_page_has_form(self):
         """На страницы создания и редактирования заметки передаются формы."""
         urls = [reverse('notes:add'),
                 reverse('notes:edit', args=[self.note.slug])]
         for url in urls:
-            response = self.client.get(url)
-            self.assertIn('form', response.context)
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertIn('form', response.context)
