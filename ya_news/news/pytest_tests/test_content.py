@@ -8,7 +8,7 @@ MAX_NEWS_ON_PAGE = 10
 @pytest.mark.django_db
 def test_news_count_on_home_page(client, home_url):
     """
-    Количество новостей на главной странице — не более 10.
+    Количество новостей на главной странице — не более 10(MAX_NEWS_ON_PAGE).
     """
     response = client.get(home_url)
     assert len(response.context['news_list']) <= MAX_NEWS_ON_PAGE
@@ -28,10 +28,8 @@ def test_news_order_on_home_page(client, home_url):
 
 @pytest.mark.django_db
 def test_comments_order_on_news_page(client, second_news, second_comments):
-    """
-    Комментарии на странице отдельной новости отсортированы:
-    старые в начале списка, новые — в конце.
-    """
+    """Комментарии на странице отдельной новости отсортированы:
+    старые в начале списка, новые — в конце."""
     url = reverse('news:detail', args=(second_news[0].id,))
     response = client.get(url)
     comments_list = response.context['news'].comment_set.all()
