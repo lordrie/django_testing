@@ -6,23 +6,29 @@ from http import HTTPStatus
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('is_anonymous', [True, False])
-def test_user_can_create_comment(client, client_loggin, news_detail_url,
-                                 form_data, is_anonymous):
+def test_anonymous_user_cant_create_comment(client,
+                                            news_detail_url, form_data):
     """
-    Проверка возможности создания комментария анонимным
-    и авторизованным пользователями.
+    Тест проверяет, что анонимный пользователь не может отправить комментарий.
     """
-    if is_anonymous:
-        client.post(news_detail_url, data=form_data)
-        assert Comment.objects.count() == 0
-    else:
-        response = client_loggin.post(news_detail_url, data=form_data)
-        assert response.status_code == 302
-        assert response.url == f'{news_detail_url}#comments'
-        assert Comment.objects.count() == 1
-        comment = Comment.objects.first()
-        assert comment.text == form_data['text']
+    client.post(news_detail_url, data=form_data)
+    assert Comment.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_user_can_create_comment(client_loggin,
+                                 news_detail_url, news, author, form_data):
+    """
+    Авторизованный пользователь может отправить комментарий.
+    """
+    response = client_loggin.post(news_detail_url, data=form_data)
+    assert response.status_code == 302
+    assert response.url == f'{news_detail_url}#comments'
+    assert Comment.objects.count() == 1
+    comment = Comment.objects.first()
+    assert comment.text == form_data['text']
+    assert comment.news == news
+    assert comment.author == author
 
 
 @pytest.mark.django_db
