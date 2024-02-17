@@ -10,11 +10,13 @@
 
 ```
 git clone https://github.com/lordrie/django_testing
-cd django_testing-main/
 ```
 
 Cоздать и активировать виртуальное окружение:
 
+```
+cd django_testing-main/
+```
 ```
 python -m venv env
 ```
