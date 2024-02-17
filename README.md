@@ -41,5 +41,12 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
-Запустить проект:
-
+Запустить проект ya_news с pytest:
+```
+./run_tests.sh
+```
+Запустить проект ya_note с unittest:
+```
+cd ya_note/
+python manage.py test
+```
